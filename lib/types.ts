@@ -4,6 +4,18 @@ export interface Pokemon {
   id: number;
   image: string;
   primaryType: string;
+  types: string[];
+  generation: number;
+  abilities: string[];
+  stats: {
+    hp: number;
+    attack: number;
+    defense: number;
+    "special-attack": number;
+    "special-defense": number;
+    speed: number;
+    total: number;
+  };
 }
 
 export interface PokemonParams {

@@ -13,6 +13,18 @@ function getPokemonIdFromUrl(url: string): number {
   return parseInt(parts[parts.length - 2]);
 }
 
+function getGenerationById(id: number): number {
+  if (id <= 151) return 1;
+  if (id <= 251) return 2;
+  if (id <= 386) return 3;
+  if (id <= 493) return 4;
+  if (id <= 649) return 5;
+  if (id <= 721) return 6;
+  if (id <= 809) return 7;
+  if (id <= 905) return 8;
+  return 9;
+}
+
 export async function getPokemonList(limit = 151): Promise<Pokemon[]> {
   const response = await fetch(`${POKEMON_API}?limit=${limit}`);
   const data: PokemonListResponse = await response.json();
@@ -21,9 +33,35 @@ export async function getPokemonList(limit = 151): Promise<Pokemon[]> {
     data.results.map(async (pokemon) => {
       const id = getPokemonIdFromUrl(pokemon.url);
       const detailResponse = await fetch(`${POKEMON_API}/${id}`);
-      const detail: Pick<PokemonDetail, "types"> = await detailResponse.json();
+      const detail: PokemonDetail & {
+        abilities: {
+          ability: {
+            name: string;
+          };
+        }[];
+      } = await detailResponse.json();
       const primaryType =
         detail.types.find((item) => item.slot === 1)?.type.name ?? detail.types[0]?.type.name ?? "normal";
+      const types = detail.types.map((item) => item.type.name);
+      const abilities = detail.abilities.map((item) => item.ability.name);
+
+      const statsMap = {
+        hp: 0,
+        attack: 0,
+        defense: 0,
+        "special-attack": 0,
+        "special-defense": 0,
+        speed: 0,
+      };
+
+      detail.stats.forEach((item) => {
+        if (item.stat.name in statsMap) {
+          const key = item.stat.name as keyof typeof statsMap;
+          statsMap[key] = item.base_stat;
+        }
+      });
+
+      const total = Object.values(statsMap).reduce((sum, value) => sum + value, 0);
 
       return {
         name: pokemon.name,
@@ -31,6 +69,13 @@ export async function getPokemonList(limit = 151): Promise<Pokemon[]> {
         id,
         image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
         primaryType,
+        types,
+        generation: getGenerationById(id),
+        abilities,
+        stats: {
+          ...statsMap,
+          total,
+        },
       };
     })
   );

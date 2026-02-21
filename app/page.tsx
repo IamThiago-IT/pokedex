@@ -2,7 +2,7 @@ import { PokemonGrid } from "../components/PokemonGrid";
 import { getPokemonList } from "../lib/pokeapi";
 
 export default async function Home() {
-  const pokemonList = await getPokemonList(151);
+  const pokemonList = await getPokemonList(386);
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8 sm:p-24 bg-white dark:bg-black text-black dark:text-white">
