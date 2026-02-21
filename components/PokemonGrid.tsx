@@ -35,7 +35,7 @@ export function PokemonGrid({ initialPokemonList }: PokemonGridProps) {
       
       {filteredPokemon.length === 0 && (
         <p className="text-center text-gray-500 mt-8">
-          No Pokemon found matching "{searchText}"
+          No Pokemon found matching &quot;{searchText}&quot;
         </p>
       )}
     </div>

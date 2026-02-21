@@ -3,6 +3,7 @@ export interface Pokemon {
   url: string;
   id: number;
   image: string;
+  primaryType: string;
 }
 
 export interface PokemonParams {

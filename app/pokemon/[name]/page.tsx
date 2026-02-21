@@ -1,12 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getPokemon } from "../../../lib/pokeapi";
-import { PokemonParams } from "../../../lib/types";
+import { getTypeTheme } from "../../../lib/type-theme";
 
 export default async function PokemonPage({ params }: {params: Promise<{ name: string }>}) {
   const { name } = await params;
   const pokemon = await getPokemon(name);
   const image = pokemon.sprites.other["official-artwork"].front_default;
+  const primaryType =
+    pokemon.types.find((item) => item.slot === 1)?.type.name ?? pokemon.types[0]?.type.name;
+  const theme = getTypeTheme(primaryType);
 
   return (
     <div className="flex min-h-screen flex-col items-center p-8 sm:p-24 bg-white dark:bg-black text-black dark:text-white">
@@ -16,7 +19,14 @@ export default async function PokemonPage({ params }: {params: Promise<{ name: s
         </Link>
         
         <div className="mt-8 flex flex-col items-center">
-          <h1 className="text-4xl font-bold capitalize mb-4">{pokemon.name} <span className="text-gray-500">#{pokemon.id}</span></h1>
+          <h1 className="text-4xl font-bold capitalize mb-4">
+            {pokemon.name} <span className="text-gray-500">#{pokemon.id}</span>
+          </h1>
+          {primaryType && (
+            <span className={`mb-6 px-3 py-1 rounded-full text-sm font-semibold capitalize ${theme.chip}`}>
+              {primaryType}
+            </span>
+          )}
           
           <div className="relative w-64 h-64 mb-8">
             <Image
@@ -38,8 +48,8 @@ export default async function PokemonPage({ params }: {params: Promise<{ name: s
                   <div className="flex items-center gap-2">
                     <span className="font-bold">{stat.base_stat}</span>
                     <div className="w-24 h-2 bg-gray-300 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500" 
+                      <div
+                        className={`h-full ${theme.progress}`}
                         style={{ width: `${Math.min(100, (stat.base_stat / 255) * 100)}%` }}
                       />
                     </div>
@@ -63,7 +73,7 @@ export default async function PokemonPage({ params }: {params: Promise<{ name: s
                     <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">Types</h4>
                     <div className="flex gap-2">
                         {pokemon.types.map((type) => (
-                            <span key={type.type.name} className="px-3 py-1 bg-blue-500 text-white rounded-full capitalize text-sm">
+                        <span key={type.type.name} className={`px-3 py-1 rounded-full capitalize text-sm ${getTypeTheme(type.type.name).chip}`}>
                                 {type.type.name}
                             </span>
                         ))}
