@@ -45,3 +45,25 @@ export interface PokemonListResponse {
     url: string;
   }[];
 }
+
+export interface DashboardStatAverage {
+  stat: string;
+  average: number;
+}
+
+export interface DashboardTopPokemon {
+  id: number;
+  name: string;
+  total: number;
+}
+
+export interface DashboardTypeCount {
+  type: string;
+  count: number;
+}
+
+export interface PokemonDashboardData {
+  statAverages: DashboardStatAverage[];
+  topPokemonByTotal: DashboardTopPokemon[];
+  typeDistribution: DashboardTypeCount[];
+}

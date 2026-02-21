@@ -1,4 +1,9 @@
-import { Pokemon, PokemonDetail, PokemonListResponse } from "./types";
+import {
+  Pokemon,
+  PokemonDashboardData,
+  PokemonDetail,
+  PokemonListResponse,
+} from "./types";
 
 const POKEMON_API = "https://pokeapi.co/api/v2/pokemon";
 
@@ -39,4 +44,62 @@ export async function getPokemon(name: string): Promise<PokemonDetail> {
       throw new Error(`Failed to fetch pokemon: ${name}`);
   }
   return response.json();
+}
+
+export async function getPokemonDashboardData(limit = 151): Promise<PokemonDashboardData> {
+  const response = await fetch(`${POKEMON_API}?limit=${limit}`, {
+    next: { revalidate: 3600 },
+  });
+  const data: PokemonListResponse = await response.json();
+
+  const details = await Promise.all(
+    data.results.map(async (pokemon) => {
+      const detailResponse = await fetch(`${POKEMON_API}/${pokemon.name}`, {
+        next: { revalidate: 3600 },
+      });
+      const detail: PokemonDetail = await detailResponse.json();
+      return detail;
+    })
+  );
+
+  const statSums = new Map<string, number>();
+  const typeCounts = new Map<string, number>();
+
+  const topPokemonByTotal = details
+    .map((detail) => ({
+      id: detail.id,
+      name: detail.name,
+      total: detail.stats.reduce((sum, stat) => sum + stat.base_stat, 0),
+    }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  details.forEach((detail) => {
+    detail.stats.forEach((stat) => {
+      const current = statSums.get(stat.stat.name) ?? 0;
+      statSums.set(stat.stat.name, current + stat.base_stat);
+    });
+
+    detail.types.forEach((typeSlot) => {
+      const typeName = typeSlot.type.name;
+      const current = typeCounts.get(typeName) ?? 0;
+      typeCounts.set(typeName, current + 1);
+    });
+  });
+
+  const statAverages = Array.from(statSums.entries()).map(([stat, sum]) => ({
+    stat,
+    average: Number((sum / details.length).toFixed(2)),
+  }));
+
+  const typeDistribution = Array.from(typeCounts.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  return {
+    statAverages,
+    topPokemonByTotal,
+    typeDistribution,
+  };
 }
